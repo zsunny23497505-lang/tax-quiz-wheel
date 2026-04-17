@@ -156,10 +156,16 @@
                         backBtn.style.display = 'inline-block';
                     }
                 } else {
-                    feedback.innerText = "❌ 答錯囉，正確答案是 (A)";
-                    feedback.style.color = "var(--error)";
-                    backBtn.style.display = 'inline-block';
-                }
+    // --- 答錯邏輯 ---
+    // 這行會自動把 0 轉成 A, 1 轉成 B, 3 轉成 D
+    const correctLetter = String.fromCharCode(65 + data.correct); 
+    
+    feedback.innerText = "❌ 答錯囉，正確答案是 (" + correctLetter + ")";
+    feedback.style.color = "var(--error)";
+    
+    // 無論哪一題，只要答錯就顯示回到轉盤按鈕
+    backBtn.style.display = 'inline-block'; 
+}
             };
             container.appendChild(btn);
         });
