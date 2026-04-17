@@ -89,29 +89,36 @@
             }
         }
 
-function spin() {
-        // --- 自動重置邏輯 ---
-        // 如果清單空了，代表 6 題都玩過了，立刻重啟新的一輪
+       function spin() {
         if (availableIndices.length === 0) {
+            // 自動重置
             availableIndices = [0, 1, 2, 3, 4, 5];
         }
 
         spinBtn.disabled = true;
         
-        // 從剩下的題號中隨機挑一個
+        // 1. 隨機選一個還沒出的題號
         const randomIndex = Math.floor(Math.random() * availableIndices.length);
         const targetIdx = availableIndices[randomIndex];
 
-        // 計算讓轉盤停在 targetIdx 的角度 (校正指針在正上方)
-        const targetAngle = 360 - (targetIdx * 60) - 30; 
-        const extraSpins = 1800; // 轉 5 圈增加動感
-        rotation += extraSpins + (targetAngle - (rotation % 360));
+        /* 2. 核心修正：計算角度
+           - 每一格 60 度
+           - 指標在正上方 (270度方向)
+           - 為了停在格子正中央，我們需要計算：(360 - 索引*60) - 30 
+        */
+        const segmentAngle = 60;
+        const targetCenterAngle = (360 - (targetIdx * segmentAngle)) - (segmentAngle / 2);
+        
+        // 加上轉圈數 (1800度 = 5圈)，並確保 rotation 累加避免反轉
+        const extraSpins = 1800; 
+        const currentRotationBase = Math.ceil(rotation / 360) * 360;
+        rotation = currentRotationBase + extraSpins + targetCenterAngle;
 
         canvas.style.transition = 'transform 4s cubic-bezier(0.15, 0, 0.15, 1)';
         canvas.style.transform = `rotate(${rotation}deg)`;
 
         setTimeout(() => {
-            // 從背景清單中移除這一題，下次轉就不會中
+            // 從背景清單中移除這一題
             availableIndices = availableIndices.filter(item => item !== targetIdx);
             showQuiz(targetIdx);
         }, 4000);
