@@ -68,13 +68,16 @@
             { cat: "納保-小吉的權益守護者", q: "稅務案件遇到困難，誰能提供協助？", img: "q2.jpg", options: ["納稅者權利保護官", "鄰居阿姨"], correct: 0 },
             { cat: "同性平等-LGBT多元性別平等", q: "「攜手同行，相伴一生」影片，著重傳達核心訊息為：", img: "q3.jpg", options: ["同性伴侶在結婚當年度，可選擇合併或分開申報所得稅。", "配偶之間（包含同性配偶）相互贈與的財產，免徵贈與稅。","同性伴侶在繼承權方面與異性配偶享有同等地位","以上皆是"], correct: 3 },
             { cat: "反詐騙-小吉的詐騙終結者", q: "收到疑似詐騙簡訊或連結，該怎麼辦？", img: "q4.jpg", options: ["撥打165專線求證", "點開來看看是甚麼"], correct: 0 },
-            { cat: "CFC-小吉的海外營收迷宮", q: "海外盈餘只要不匯回，就不用在台灣報稅？", img: "q5.jpg", options: ["不是，適用CFC制度需申報", "是的，不匯回就不稅"], correct: 0 },
-            { cat: "稅務新知-小吉的智慧探索家", q: "想知道最新稅務優惠與法規更新嗎？", img: "q6.jpg", options: ["掃QR Code看新知", "不理它"], correct: 0 }
+            { cat: "CFC-小吉的海外營收迷宮", q: "受控外國企業簡稱？", img: "q5.jpg", options: ["CFC", "KFC"], correct: 0 },
+            { cat: "稅務新知-小吉的智慧探索家", q: "如何得知最新的稅務新知影片？", img: "q6.jpg", options: ["可至中區國稅局YouTube頻道「中區國稅局稅務e級棒」看新知影片", "不理它"], correct: 0 }
         ];
 
         const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9F43', '#A29BFE', '#54A0FF'];
         let rotation = 0;
 
+        // 背景紀錄：哪些題號還沒被抽過
+    let availableIndices = [0, 1, 2, 3, 4, 5];
+        
         function drawWheel() {
             const size = canvas.width, center = size / 2, slice = (Math.PI * 2) / 6;
             for (let i = 0; i < 6; i++) {
@@ -86,72 +89,84 @@
             }
         }
 
-        function spin() {
-            spinBtn.disabled = true;
-            rotation += Math.floor(Math.random() * 360) + 1800;
-            canvas.style.transition = 'transform 4s cubic-bezier(0.15, 0, 0.15, 1)';
-            canvas.style.transform = `rotate(${rotation}deg)`;
-            setTimeout(() => {
-                const index = Math.floor(((360 - (rotation % 360) + 270) % 360) / 60);
-                showQuiz(index);
-            }, 4000);
+function spin() {
+        // --- 自動重置邏輯 ---
+        // 如果清單空了，代表 6 題都玩過了，立刻重啟新的一輪
+        if (availableIndices.length === 0) {
+            availableIndices = [0, 1, 2, 3, 4, 5];
         }
 
-        function showQuiz(idx) {
-            wheelSec.style.display = 'none'; 
-            quizSec.style.display = 'block';
-            
-            const data = quizData[idx];
-            document.getElementById('q-category').innerText = `【 ${data.cat} 】`;
-            document.getElementById('q-title').innerText = data.q;
-            
-            // 顯示對應圖片
-            const qImg = document.getElementById('q-img-display');
-            qImg.src = data.img;
+        spinBtn.disabled = true;
+        
+        // 從剩下的題號中隨機挑一個
+        const randomIndex = Math.floor(Math.random() * availableIndices.length);
+        const targetIdx = availableIndices[randomIndex];
 
-            const container = document.getElementById('options-container');
-            const feedback = document.getElementById('feedback');
-            const backBtn = document.getElementById('backBtn');
-            
-            container.innerHTML = ""; 
-            feedback.innerText = ""; 
-            backBtn.style.display = 'none';
+        // 計算讓轉盤停在 targetIdx 的角度 (校正指針在正上方)
+        const targetAngle = 360 - (targetIdx * 60) - 30; 
+        const extraSpins = 1800; // 轉 5 圈增加動感
+        rotation += extraSpins + (targetAngle - (rotation % 360));
 
-            data.options.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = `(${String.fromCharCode(65 + i)}) ${opt}`;
-                btn.onclick = () => {
-                    const allBtns = container.querySelectorAll('button');
-                    allBtns.forEach(b => b.disabled = true);
-                    
-                    if (i === data.correct) {
-                        // --- 答對邏輯 ---
-                        if (idx === 5) { // 如果是第六題
-                            feedback.innerText = "✅ 答對了！即將前往 YouTube...";
-                            feedback.style.color = "var(--success)";
-                            setTimeout(() => {
-                                window.location.href = "https://www.youtube.com/@yourntact";
-                            }, 2500);
-                        } else {
-                            feedback.innerText = "✅ 恭喜答對了！";
-                            feedback.style.color = "var(--success)";
-                            backBtn.style.display = 'inline-block'; // 顯示回到轉盤按鈕
-                        }
+        canvas.style.transition = 'transform 4s cubic-bezier(0.15, 0, 0.15, 1)';
+        canvas.style.transform = `rotate(${rotation}deg)`;
+
+        setTimeout(() => {
+            // 從背景清單中移除這一題，下次轉就不會中
+            availableIndices = availableIndices.filter(item => item !== targetIdx);
+            showQuiz(targetIdx);
+        }, 4000);
+    }
+
+    function showQuiz(idx) {
+        wheelSec.style.display = 'none'; quizSec.style.display = 'block';
+        const data = quizData[idx];
+        document.getElementById('q-category').innerText = `【 ${data.cat} 】`;
+        document.getElementById('q-title').innerText = data.q;
+        const qImg = document.getElementById('q-img-display');
+        qImg.src = data.img;
+
+        const container = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('backBtn');
+        container.innerHTML = ""; feedback.innerText = ""; backBtn.style.display = 'none';
+
+        data.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = `(${String.fromCharCode(65 + i)}) ${opt}`;
+            btn.onclick = () => {
+                const allBtns = container.querySelectorAll('button');
+                allBtns.forEach(b => b.disabled = true);
+                
+                if (i === data.correct) {
+                    if (idx === 5) { // 第六題依然維持跳轉 YT 的驚喜
+                        feedback.innerText = "✅ 答對了！即將前往 YouTube...";
+                        feedback.style.color = "var(--success)";
+                        setTimeout(() => { window.location.href = "https://www.youtube.com/@yourntact"; }, 2500);
                     } else {
-                        // --- 答錯邏輯 ---
-                        feedback.innerText = "❌ 答錯囉，正確答案是 (A)";
-                        feedback.style.color = "var(--error)";
-                        // 無論哪一題（包含第六題），只要答錯就顯示回到轉盤按鈕
-                        backBtn.style.display = 'inline-block'; 
+                        feedback.innerText = "✅ 恭喜答對了！";
+                        feedback.style.color = "var(--success)";
+                        backBtn.style.display = 'inline-block';
                     }
-                };
-                container.appendChild(btn);
-            });
-        }
+                } else {
+                    feedback.innerText = "❌ 答錯囉，正確答案是 (A)";
+                    feedback.style.color = "var(--error)";
+                    backBtn.style.display = 'inline-block';
+                }
+            };
+            container.appendChild(btn);
+        });
+    }
 
-        function showWheel() { quizSec.style.display = 'none'; wheelSec.style.display = 'flex'; spinBtn.disabled = false; }
-        drawWheel();
+    function showWheel() {
+        quizSec.style.display = 'none'; 
+        wheelSec.style.display = 'flex'; 
+        spinBtn.disabled = false;
+        // 如果背景題目全部抽完，下一秒再點「開始旋轉」就會自動跑新的一輪，不需更動按鈕文字
+    }
+    
+    drawWheel();
+
     </script>
 </body>
 </html>
