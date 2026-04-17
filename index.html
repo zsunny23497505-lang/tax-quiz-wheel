@@ -56,6 +56,7 @@
     </div>
 
     <script>
+        const subLabels = ["雲端發票", "納保官", "性別平等", "反詐騙", "CFC", "稅務新知"];
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const wheelSec = document.getElementById('wheel-section');
@@ -78,7 +79,7 @@
         // 背景紀錄：哪些題號還沒被抽過
     let availableIndices = [0, 1, 2, 3, 4, 5];
         
-        function drawWheel() {
+        ffunction drawWheel() {
         const size = canvas.width, center = size / 2, slice = (Math.PI * 2) / 6;
         ctx.clearRect(0, 0, size, size);
         
@@ -89,23 +90,27 @@
             ctx.beginPath();
             ctx.fillStyle = colors[i];
             ctx.moveTo(center, center);
-            // 繪製扇形
             ctx.arc(center, center, center, startOffset + i * slice, startOffset + (i + 1) * slice);
             ctx.fill();
 
-            // 繪製文字
             ctx.save();
             ctx.translate(center, center);
-            // 文字旋轉角度也要跟著偏移
             ctx.rotate(startOffset + i * slice + slice / 2);
             ctx.fillStyle = "#fff";
-            ctx.font = "bold 20px sans-serif";
             ctx.textAlign = "right";
-            ctx.fillText("第 " + (i + 1) + " 題", center - 20, 10);
+            
+            // --- 第一行：主標題 (第 n 題) ---
+            ctx.font = "bold 17px sans-serif";
+            ctx.fillText("第 " + (i + 1) + " 題", center - 25, -8); 
+
+            // --- 第二行：副標題 ---
+            ctx.font = "14px sans-serif"; // 副標題稍微小一點
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)"; // 稍微透明做出層次感
+            ctx.fillText(subLabels[i], center - 25, 15); 
+            
             ctx.restore();
         }
     }
-
        function spin() {
         if (availableIndices.length === 0) {
             availableIndices = [0, 1, 2, 3, 4, 5];
